@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"tictacgo/game"
 )
 
@@ -13,10 +12,9 @@ func main() {
 		g.Render()
 		g.AdvanceTurn()
 	}
-	g.Render()
 	if state == game.DRAW {
 		println("A shameful display!")
 	} else {
-		fmt.Printf("Player %d won!", state)
+		println("Player", state, "won!")
 	}
 }

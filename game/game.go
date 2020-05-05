@@ -11,15 +11,8 @@ const (
 	PLAYER2
 )
 
-const (
-	maxInt = int(^uint(0) >> 1)
-	minInt = -maxInt - 1
-)
-
-type Board [9]int
-
 type Game struct {
-	board   Board
+	board   [9]int
 	player  int
 	aiFlags []bool
 }
@@ -79,12 +72,8 @@ func (g *Game) AIMove(depth int) (tile, score int) {
 	case DRAW:
 		return -1, 0
 	}
-	var bestTile, bestScore int
-	if g.player == PLAYER1 {
-		bestScore = minInt
-	} else {
-		bestScore = maxInt
-	}
+	var bestTile int
+	bestScore := []int{0, -20, 20}[g.player]
 	for i, tile := range g.board {
 		if tile == 0 {
 			g.board[i] = g.player
@@ -104,14 +93,12 @@ func (g *Game) State() int {
 	tiles := [][3]int{
 		{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // Rows
 		{0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // Columns
-		{0, 4, 8}, {2, 4, 6}, //Diags
+		{0, 4, 8}, {2, 4, 6}, // Diags
 	}
 	for _, t := range tiles {
 		a, b, c := g.board[t[0]], g.board[t[1]], g.board[t[2]]
-		for _, p := range []int{PLAYER1, PLAYER2} {
-			if p == a && a == b && b == c {
-				return p
-			}
+		if 0 != a && a == b && b == c {
+			return a
 		}
 	}
 	for _, i := range g.board {
