@@ -1,35 +1,34 @@
 package game
 
-import (
-	"fmt"
-)
+import "fmt"
+
+type state int
 
 const (
-	DRAW = iota - 1
-	CONT
-	PLAYER1
-	PLAYER2
+	Draw state = iota - 1
+	Cont
+	Player1
+	Player2
 )
 
 type Game struct {
-	board   [9]int
-	player  int
+	board   [9]state
+	player  state
 	aiFlags []bool
 }
 
-func NewGame(ai1, ai2 bool) *Game {
+func New(ai1, ai2 bool) *Game {
 	return &Game{
-		player:  PLAYER1,
+		player:  Player1,
 		aiFlags: []bool{false, ai1, ai2},
 	}
 }
 
-func (g *Game) AdvanceTurn() {
-	if g.player == PLAYER1 {
-		g.player = PLAYER2
-	} else {
-		g.player = PLAYER1
-	}
+func (g *Game) Advance() {
+	g.player = map[state]state{
+		Player1: Player2,
+		Player2: Player1,
+	}[g.player]
 }
 
 func (g *Game) Render() {
@@ -42,14 +41,14 @@ func (g *Game) Render() {
 func (g *Game) Move() {
 	var i int
 	if g.aiFlags[g.player] {
-		i, _ = g.AIMove(0)
+		i, _ = g.aiMove(0)
 	} else {
-		i = g.PlayerMove()
+		i = g.playerMove()
 	}
 	g.board[i] = g.player
 }
 
-func (g *Game) PlayerMove() int {
+func (g *Game) playerMove() int {
 	var input string
 	var tile int
 	fmt.Printf("Player %d to move (1-9): ", g.player)
@@ -57,39 +56,43 @@ func (g *Game) PlayerMove() int {
 	_, err := fmt.Sscanf(input, "%d", &tile)
 	if err != nil || !(1 <= tile && tile <= 9) || g.board[tile-1] != 0 {
 		println("Bad input!")
-		return g.PlayerMove()
+		return g.playerMove()
 	}
 	return tile - 1
 }
 
 // Minimax! Player 1 is maximizing.
-func (g *Game) AIMove(depth int) (tile, score int) {
+func (g *Game) aiMove(depth int) (optTile, score int) {
 	switch g.State() {
-	case PLAYER1:
-		return -1, 10 - depth
-	case PLAYER2:
-		return -1, -(10 - depth)
-	case DRAW:
-		return -1, 0
+	case Player1:
+		score = 10 - depth
+		return
+	case Player2:
+		score = depth - 10
+		return
+	case Draw:
+		return
 	}
-	var bestTile int
-	bestScore := []int{0, -20, 20}[g.player]
+	score = map[state]int{
+		Player1: -20,
+		Player2: 20,
+	}[g.player]
 	for i, tile := range g.board {
 		if tile == 0 {
 			g.board[i] = g.player
-			g.AdvanceTurn()
-			_, m := g.AIMove(depth + 1)
-			g.AdvanceTurn()
+			g.Advance()
+			_, m := g.aiMove(depth + 1)
+			g.Advance()
 			g.board[i] = 0
-			if (g.player == PLAYER1 && bestScore < m) || (g.player == PLAYER2 && m < bestScore) {
-				bestTile, bestScore = i, m
+			if (g.player == Player1 && score < m) || (g.player == Player2 && m < score) {
+				optTile, score = i, m
 			}
 		}
 	}
-	return bestTile, bestScore
+	return
 }
 
-func (g *Game) State() int {
+func (g *Game) State() state {
 	tiles := [][3]int{
 		{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // Rows
 		{0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // Columns
@@ -103,8 +106,8 @@ func (g *Game) State() int {
 	}
 	for _, i := range g.board {
 		if i == 0 {
-			return CONT
+			return Cont
 		}
 	}
-	return DRAW
+	return Draw
 }

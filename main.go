@@ -1,18 +1,15 @@
 package main
 
-import (
-	"tictacgo/game"
-)
+import "tictacgo/game"
 
 func main() {
-	g := game.NewGame(false, true)
-	var state int
-	for state = game.CONT; state == game.CONT; state = g.State() {
+	g := game.New(false, true)
+	for g.State() == game.Cont {
 		g.Move()
 		g.Render()
-		g.AdvanceTurn()
+		g.Advance()
 	}
-	if state == game.DRAW {
+	if state := g.State(); state == game.Draw {
 		println("A shameful display!")
 	} else {
 		println("Player", state, "won!")
